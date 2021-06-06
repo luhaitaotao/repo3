@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+    <bean id="saccountDao" class="com.itheima.dao.impl.SaccountDaoImpl">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <bean id="saccountService" class="com.itheima.service.impl.SacciuntServiceImpl">
+        <property name="saccountDao" ref="saccountDao"></property>
+    </bean>
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+        <property name="url" value="jdbc:mysql://localhost:3306/eesy"></property>
+        <property name="username" value="root"></property>
+        <property name="password" value="root"></property>
+    </bean>
+    <!--配置spring基于注解要扫描的包-->
+    <context:component-scan base-package="com.itheima"></context:component-scan>
+    <!--配置spring开启aop的支持-->
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+    <!--spring中基于xml的声明事物控制配置步骤-->
+    <!--1.配置一个事物管理器rtansactionManager 里面需要一个DataSource-->
+    <!--1.配置事物管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!--2.配置事物的通知；-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!--3配置事物的属性 propagation表示事物的传播行为正删改要用Required默认值 查可以用supports-->
+            <tx:method name="*" propagation="REQUIRED" read-only="false"></tx:method>
+            <tx:method name="find*" propagation="SUPPORTS" read-only="true"></tx:method>
+        </tx:attributes>
+    </tx:advice>
+    <!--4.配置切入点表达式-->
+    <aop:config>
+        <aop:pointcut id="pt1" expression="execution(* com.itheima.service.impl.*.*(..))"></aop:pointcut>
+        <!--将切入点表达式和事物管理器对应起来-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pt1"></aop:advisor>
+    </aop:config>
+</beans>
